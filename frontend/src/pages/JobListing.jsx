@@ -23,7 +23,7 @@ function JobListing() {
     setLoading(true);
     setError(null);
     try {
-      const response = await fetch('https://job-scraper-bzl9.onrender.com/api/jobs/');
+      const response = await fetch('/api/jobs/');
       if (!response.ok) {
         throw new Error('Failed to fetch jobs');
       }
@@ -60,7 +60,7 @@ function JobListing() {
     setLoadingSummaries({ ...loadingSummaries, [jobId]: true });
     
     try {
-      const response = await fetch(`https://job-scraper-bzl9.onrender.com/api/jobs/${jobId}/summary/`);
+      const response = await fetch(`/api/jobs/${jobId}/summary/`);
       if (!response.ok) {
         throw new Error('Failed to fetch job summary');
       }
