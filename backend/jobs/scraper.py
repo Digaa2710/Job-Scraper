@@ -9,8 +9,10 @@ from webdriver_manager.chrome import ChromeDriverManager
 
 def initialize_driver():
     options = webdriver.ChromeOptions()
+    options.add_argument('--headless')  # important for deployment
     options.add_argument('--no-sandbox')
     options.add_argument('--disable-dev-shm-usage')
+    options.add_argument('--disable-gpu')
     driver = webdriver.Chrome(service=Service(ChromeDriverManager().install()), options=options)
     return driver
 
@@ -29,9 +31,7 @@ def get_jobs(driver):
             title_elem = section.find_element(By.XPATH, './/h1[contains(@class, "CDt4Ke")]')
             raw_title = title_elem.text.strip()
             
-            # More robust cleaning - handles different variations
             cleaned_title = re.sub(r'(?i)\s*,?\s*mumbai\s*$', '', raw_title)
-            
             paragraphs = section.find_elements(By.XPATH, './/p')
             link_elem = section.find_element(By.XPATH, './/a[contains(@class, "FKF6mc TpQm9d QmpIrf")]')
             
@@ -39,7 +39,6 @@ def get_jobs(driver):
             
             for p in paragraphs:
                 text = p.text.lower()
-                
                 if "location" in text:
                     location = p.text.replace("📍 location -", "").strip()
                 elif "rs." in text:
