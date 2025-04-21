@@ -4,7 +4,7 @@ from rest_framework import status
 from .models import Job
 from .serializers import JobSerializer
 from .scraper import job_find_main
-from .chatbot import summarize_text, extract_email  # ✅ Import both
+from .chatbot import summarize_text, extract_email  
 
 class JobListView(APIView):
     def get(self, request):
@@ -45,13 +45,13 @@ class JobDetailView(APIView):
         except Job.DoesNotExist:
             return Response({"error": "Job not found."}, status=status.HTTP_404_NOT_FOUND)
 
-# ✅ Summarize & Extract Email using DeepSeek
+#  Summarize & Extract Email using DeepSeek
 class JobSummaryView(APIView):
     def get(self, request, id):
         try:
             job = Job.objects.get(pk=id)
 
-            # Prepare text to be passed to the model
+           
             text = f"""
             Job Title: {job.title}
             Location: {job.location}

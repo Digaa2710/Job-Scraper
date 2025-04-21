@@ -29,7 +29,7 @@ def get_jobs(driver):
             title_elem = section.find_element(By.XPATH, './/h1[contains(@class, "CDt4Ke")]')
             raw_title = title_elem.text.strip()
             
-            # More robust cleaning - handles different variations
+          
             cleaned_title = re.sub(r'(?i)\s*,?\s*mumbai\s*$', '', raw_title)
             
             paragraphs = section.find_elements(By.XPATH, './/p')
