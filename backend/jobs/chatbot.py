@@ -14,7 +14,7 @@ def summarize_text(text_to_summarize):
        
     }
     payload = {
-        "model": "deepseek/deepseek-r1",  # ⚡ Correct Model ID for DeepSeek R1
+        "model": "deepseek/deepseek-r1",  
         "messages": [
             {
                 "role": "user",
@@ -32,6 +32,30 @@ def summarize_text(text_to_summarize):
         print(f"Error: {response.status_code} {response.text}")
         return None
 
+# 🚨 Only this part is added to fetch email:
+def extract_email(text):
+    url = "https://openrouter.ai/api/v1/chat/completions"
+    headers = {
+        "Authorization": f"Bearer {API_KEY}",
+        "Content-Type": "application/json",
+    }
+    payload = {
+        "model": "deepseek/deepseek-r1",
+        "messages": [
+            {
+                "role": "user",
+                "content": f"Extract **only the email address** (if any) from this text:\n\n{text}"
+            }
+        ]
+    }
+
+    response = requests.post(url, headers=headers, data=json.dumps(payload))
+    if response.status_code == 200:
+        return response.json()['choices'][0]['message']['content'].strip()
+    else:
+        print(f"Error: {response.status_code} {response.text}")
+        return None
+
 if __name__ == "__main__":
     # Example text
     long_text = """
@@ -39,11 +63,18 @@ if __name__ == "__main__":
     The company is hiring software engineers who have experience in backend systems, microservices, 
     and scalable architectures. Candidates must be proficient in Python and cloud technologies. 
     The role involves working with real-time data, optimizing delivery routes, and ensuring low latency services.
+    For queries, contact us at hiring@zepto.com
     """
 
     summary = summarize_text(long_text)
+    email = extract_email(long_text)
 
     if summary:
         print("\nSummary:\n", summary)
     else:
         print("\nFailed to generate summary.")
+
+    if email:
+        print("\nEmail:\n", email)
+    else:
+        print("\nFailed to extract email.")

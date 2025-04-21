@@ -4,7 +4,7 @@ from rest_framework import status
 from .models import Job
 from .serializers import JobSerializer
 from .scraper import job_find_main
-from .chatbot import summarize_text  # 🚀 Import your summarize_text function
+from .chatbot import summarize_text, extract_email  # ✅ Import both
 
 class JobListView(APIView):
     def get(self, request):
@@ -45,28 +45,34 @@ class JobDetailView(APIView):
         except Job.DoesNotExist:
             return Response({"error": "Job not found."}, status=status.HTTP_404_NOT_FOUND)
 
-# 🚀 NEW: Summarize a Job Description by ID
+# ✅ Summarize & Extract Email using DeepSeek
 class JobSummaryView(APIView):
     def get(self, request, id):
         try:
             job = Job.objects.get(pk=id)
 
-            # You can summarize the title + location + salary + experience together
-            text_to_summarize = f"""
+            # Prepare text to be passed to the model
+            text = f"""
             Job Title: {job.title}
             Location: {job.location}
             Salary: {job.salary}
             Experience: {job.experience}
             Openings: {job.openings}
-
+            Link: {job.link}
             """
 
-            summary = summarize_text(text_to_summarize)
+            summary = summarize_text(text)
+            email = extract_email(text)
 
-            if summary:
-                return Response({"summary": summary})
+            if summary is not None and email is not None:
+                return Response({
+                    "summary": summary,
+                    "email": email
+                })
             else:
-                return Response({"error": "Failed to generate summary."}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+                return Response({
+                    "error": "Failed to generate summary or extract email."
+                }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
         except Job.DoesNotExist:
             return Response({"error": "Job not found."}, status=status.HTTP_404_NOT_FOUND)
