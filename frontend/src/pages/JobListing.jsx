@@ -12,6 +12,7 @@ function JobListing() {
   const [showFilters, setShowFilters] = useState(false);
   const [summaries, setSummaries] = useState({});
   const [loadingSummaries, setLoadingSummaries] = useState({});
+  const [scraping, setScraping] = useState(false);
 
   // Function to clean job titles by removing Mumbai references
   const cleanJobTitle = (title) => {
@@ -40,6 +41,34 @@ function JobListing() {
       setError(err.message);
     } finally {
       setLoading(false);
+    }
+  };
+
+  // Function to trigger job scraping
+  const scrapeJobs = async () => {
+    setScraping(true);
+    setError(null);
+    try {
+      const response = await fetch('/api/scrape-jobs/', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        // Added mode: 'cors' explicitly and credentials option
+        mode: 'cors',
+        credentials: 'same-origin',
+      });
+      
+      if (!response.ok) {
+        throw new Error('Failed to scrape jobs');
+      }
+      
+      // Fetch the updated jobs after scraping
+      await fetchJobs();
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setScraping(false);
     }
   };
 
@@ -235,9 +264,33 @@ function JobListing() {
 
           {/* Job Count */}
           <div className="mb-6 flex justify-between items-center">
-            <h2 className="text-xl font-semibold text-gray-800">
-              {loading ? 'Loading jobs...' : `${filteredJobs.length} Jobs Found`}
-            </h2>
+            <div className="flex items-center">
+              <h2 className="text-xl font-semibold text-gray-800 mr-4">
+                {loading ? 'Loading jobs...' : `${filteredJobs.length} Jobs Found`}
+              </h2>
+              <button 
+                onClick={scrapeJobs}
+                disabled={scraping}
+                className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-md transition-colors duration-300 font-medium text-sm flex items-center"
+              >
+                {scraping ? (
+                  <>
+                    <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                    <span>Scraping...</span>
+                  </>
+                ) : (
+                  <>
+                    <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
+                    </svg>
+                    <span>Scrape Jobs</span>
+                  </>
+                )}
+              </button>
+            </div>
             <div className="text-sm text-gray-500">
               Sorted by relevance
             </div>
@@ -338,15 +391,7 @@ function JobListing() {
                         </svg>
                         <span className="truncate">{job.openings || 'Openings not specified'}</span>
                       </div>
-                      <div className="flex items-center text-gray-700 mb-4 gap-[7px]">
-                      <svg viewBox="0 0 24 24" width="20" height="20" xmlns="http://www.w3.org/2000/svg">
-  <rect x="2" y="4" width="20" height="16" rx="3" ry="3" fill="#b490ff" />
-  <path d="M22 7.5l-10 5.5-10-5.5" stroke="white" stroke-width="2" fill="none" />
-  <path d="M2 7.5l10 5.5 10-5.5" fill="white" opacity="0.3" />
-</svg>
-
-                        <span className="truncate">zepto_jobs@gmail.com</span>
-                      </div>
+                     
                       {job.posted_date && (
                         <div className="flex items-center text-gray-500 text-sm mb-4">
                           <svg className="w-4 h-4 mr-2 text-purple-400 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -418,26 +463,28 @@ function JobListing() {
         </div>
       </footer>
       
-      {/* Global styles to prevent overflow */}
-      <style jsx global>{`
-        html, body {
-          overflow-x: hidden;
-          width: 100%;
-          margin: 0;
-          padding: 0;
-        }
-        #__next, #root, .app {
-          overflow-x: hidden;
-          width: 100%;
-        }
-        @keyframes fadeIn {
-          from { opacity: 0; transform: translateY(-10px); }
-          to { opacity: 1; transform: translateY(0); }
-        }
-        .animate-fadeIn {
-          animation: fadeIn 0.3s ease-in-out;
-        }
-      `}</style>
+      {/* Fixed the JSX warnings by moving the styles to a regular style tag */}
+      <style dangerouslySetInnerHTML={{
+        __html: `
+          html, body {
+            overflow-x: hidden;
+            width: 100%;
+            margin: 0;
+            padding: 0;
+          }
+          #__next, #root, .app {
+            overflow-x: hidden;
+            width: 100%;
+          }
+          @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(-10px); }
+            to { opacity: 1; transform: translateY(0); }
+          }
+          .animate-fadeIn {
+            animation: fadeIn 0.3s ease-in-out;
+          }
+        `
+      }} />
     </div>
   );
 }
