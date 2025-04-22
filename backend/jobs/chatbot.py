@@ -2,8 +2,9 @@ import requests
 import json
 import os
 from dotenv import load_dotenv
-# Set your OpenRouter API key (store it safely)
-load_dotenv()  # Load environment variables from .env file
+
+# Load environment variables from .env file
+load_dotenv()
 API_KEY = os.getenv("API_Key")
 
 def summarize_text(text_to_summarize):
@@ -11,70 +12,54 @@ def summarize_text(text_to_summarize):
     headers = {
         "Authorization": f"Bearer {API_KEY}",
         "Content-Type": "application/json",
-       
     }
+    
+    # Truncate input text to save tokens
+    max_input_length = 2000  # adjust if needed
+    truncated_text = text_to_summarize[:max_input_length]
+
     payload = {
-        "model": "deepseek/deepseek-r1",  
+        "model": "deepseek/deepseek-r1",  # Using your specified model
+        "max_tokens": 512,  # Limit output tokens to reduce token cost
         "messages": [
             {
                 "role": "user",
-                "content": f"Summarize the following text in 5 lines or less:\n\n{text_to_summarize}"
+                "content": f"Summarize the following text in 5 lines or less:\n\n{truncated_text}"
             }
         ]
     }
 
     response = requests.post(url, headers=headers, data=json.dumps(payload))
 
-    if response.status_code == 200:
+    try:
         data = response.json()
-        return data['choices'][0]['message']['content']
-    else:
-        print(f"Error: {response.status_code} {response.text}")
+    except json.JSONDecodeError:
+        print("❌ Failed to decode JSON response.")
+        print("Raw response:", response.text)
         return None
 
-# 🚨 Only this part is added to fetch email:
-def extract_email(text):
-    url = "https://openrouter.ai/api/v1/chat/completions"
-    headers = {
-        "Authorization": f"Bearer {API_KEY}",
-        "Content-Type": "application/json",
-    }
-    payload = {
-        "model": "deepseek/deepseek-r1",
-        "messages": [
-            {
-                "role": "user",
-                "content": f"Extract **only the email address** (if any) from this text:\n\n{text}"
-            }
-        ]
-    }
-
-    response = requests.post(url, headers=headers, data=json.dumps(payload))
     if response.status_code == 200:
-        return response.json()['choices'][0]['message']['content'].strip()
+        if 'choices' in data and data['choices']:
+            return data['choices'][0]['message']['content']
+        else:
+            print("❌ 'choices' key missing or empty in response.")
+            print("Full response:", json.dumps(data, indent=2))
+            return None
     else:
-        print(f"Error: {response.status_code} {response.text}")
+        print(f"❌ API Error {response.status_code}: {response.text}")
         return None
 
 if __name__ == "__main__":
-    # Example text
     long_text = """
     Zepto is a fast-growing grocery delivery startup that delivers products within 10 minutes. 
     The company is hiring software engineers who have experience in backend systems, microservices, 
     and scalable architectures. Candidates must be proficient in Python and cloud technologies. 
     The role involves working with real-time data, optimizing delivery routes, and ensuring low latency services.
-    For queries, contact us at hiring@zepto.com
     """
 
     summary = summarize_text(long_text)
-    email = extract_email(long_text)
 
     if summary:
-        print("\nSummary:\n", summary)
+        print("\n✅ Summary:\n", summary)
     else:
-        print("\nFailed to generate summary.")
-
-    if email:
-        print("\nEmail:\n", email)
-    else:
-        print("\nFailed to extract email.")
+        print("\n❌ Failed to generate summary.")

@@ -4,7 +4,7 @@ from rest_framework import status
 from .models import Job
 from .serializers import JobSerializer
 from .scraper import job_find_main
-from .chatbot import summarize_text, extract_email  
+from .chatbot import summarize_text
 
 class JobListView(APIView):
     def get(self, request):
@@ -62,16 +62,14 @@ class JobSummaryView(APIView):
             """
 
             summary = summarize_text(text)
-            email = extract_email(text)
 
-            if summary is not None and email is not None:
+            if summary is not None:
                 return Response({
-                    "summary": summary,
-                    "email": email
+                    "summary": summary
                 })
             else:
                 return Response({
-                    "error": "Failed to generate summary or extract email."
+                    "error": "Failed to generate summary."
                 }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
         except Job.DoesNotExist:
